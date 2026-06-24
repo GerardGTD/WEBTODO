@@ -1,0 +1,1027 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b6b74">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Tasques">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>Tasques · Gerard</title>
+<style>
+  :root{
+    --bg:#eef2f3; --surface:#ffffff; --surface-2:#f6f8f9;
+    --ink:#16242b; --ink-soft:#42565f; --muted:#7c8d95; --line:#dde5e8;
+    --teal:#0b6b74; --teal-d:#08545b; --teal-soft:#e3f0f1;
+    --alta:#b4451f; --alta-soft:#fbe9e2;
+    --normal:#0b6b74; --baixa:#6b7d86;
+    --overdue:#b42318; --overdue-soft:#fdeceb;
+    --ok:#1f7a4d;
+    --shadow:0 1px 2px rgba(16,40,48,.06),0 8px 24px rgba(16,40,48,.06);
+    --r:14px; --r-sm:10px;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0e1619; --surface:#152126; --surface-2:#1a292f;
+      --ink:#e7eef0; --ink-soft:#aebcc2; --muted:#7d909a; --line:#243740;
+      --teal:#2fa6b0; --teal-d:#46b9c2; --teal-soft:#16323a;
+      --alta:#e8825f; --alta-soft:#3a241c; --normal:#2fa6b0; --baixa:#8aa0aa;
+      --overdue:#f08a82; --overdue-soft:#3a1f1e; --ok:#5cc78c;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);color:var(--ink);font-family:var(--sans);
+    font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+  input,select,textarea{font-family:inherit;font-size:16px}
+  :focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:6px}
+
+  .app{max-width:1080px;margin:0 auto;padding:0 16px 140px}
+
+  /* HEADER */
+  header.top{position:sticky;top:0;z-index:20;background:var(--bg);
+    padding:14px 0 10px;display:flex;flex-direction:column;gap:10px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .mark{width:30px;height:30px;border-radius:9px;flex:0 0 auto;
+    background:linear-gradient(150deg,var(--teal),var(--teal-d));position:relative}
+  .brand .mark::after{content:"";position:absolute;left:6px;right:6px;top:11px;height:7px;
+    border-radius:7px;background:rgba(255,255,255,.55)}
+  .brand h1{font-size:18px;font-weight:650;margin:0;letter-spacing:-.01em}
+  .brand .sub{font-size:12px;color:var(--muted);margin-left:auto}
+  .hactions{margin-left:auto;display:flex;gap:6px}
+  .hbtn{width:38px;height:38px;border-radius:10px;color:var(--ink-soft);
+    display:grid;place-items:center;border:1px solid var(--line);background:var(--surface)}
+  .hbtn:hover{color:var(--teal);border-color:var(--teal)}
+  .hbtn svg{width:20px;height:20px}
+  .hbtn.on{color:var(--teal)}
+  .hbtn.on svg{fill:color-mix(in srgb,var(--teal) 18%,transparent)}
+  .searchwrap{position:relative}
+  .searchwrap input{width:100%;padding:11px 14px 11px 38px;border-radius:var(--r-sm);
+    border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+  .searchwrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);
+    width:17px;height:17px;color:var(--muted)}
+
+  /* TABS */
+  nav.tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0}
+  nav.tabs::-webkit-scrollbar{display:none}
+  .tab{white-space:nowrap;padding:8px 13px;border-radius:999px;font-size:14px;font-weight:550;
+    color:var(--ink-soft);background:var(--surface);border:1px solid var(--line);display:flex;gap:7px;align-items:center}
+  .tab[aria-selected="true"]{background:var(--teal);color:#fff;border-color:var(--teal)}
+  .tab .cnt{font-size:12px;background:rgba(0,0,0,.08);border-radius:999px;padding:1px 7px;font-weight:650}
+  .tab[aria-selected="true"] .cnt{background:rgba(255,255,255,.22)}
+  .tab.warn .cnt{background:var(--overdue-soft);color:var(--overdue)}
+  .tab.warn[aria-selected="true"] .cnt{background:rgba(255,255,255,.25);color:#fff}
+
+  /* DAY HERO */
+  .hero{margin:16px 0 6px}
+  .hero .date{font-family:var(--serif);font-size:clamp(26px,6vw,38px);line-height:1.05;
+    letter-spacing:-.02em;font-weight:600}
+  .hero .date .day{color:var(--teal)}
+  .hero .meta{color:var(--muted);font-size:14px;margin-top:4px}
+
+  /* OVERDUE BANNER */
+  .alert{display:flex;align-items:center;gap:10px;background:var(--overdue-soft);
+    color:var(--overdue);border:1px solid color-mix(in srgb,var(--overdue) 30%,transparent);
+    padding:10px 14px;border-radius:var(--r-sm);font-weight:600;font-size:14px;margin:14px 0}
+  .alert b{font-weight:700}
+
+  /* SECTION */
+  .section{margin-top:18px}
+  .section h2{font-size:13px;text-transform:uppercase;letter-spacing:.07em;
+    color:var(--muted);font-weight:650;margin:0 0 8px;display:flex;align-items:center;gap:8px}
+  .section h2 .n{color:var(--ink-soft)}
+
+  /* TASK CARD */
+  ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+  .task{display:flex;gap:12px;align-items:flex-start;background:var(--surface);
+    border:1px solid var(--line);border-left:4px solid var(--baixa);
+    border-radius:var(--r);padding:13px 14px;box-shadow:var(--shadow);transition:opacity .15s,transform .08s}
+  .task.p-alta{border-left-color:var(--alta)}
+  .task.p-normal{border-left-color:var(--normal)}
+  .task.p-baixa{border-left-color:var(--baixa)}
+  .task.overdue{border-left-color:var(--overdue)}
+  .task.done{opacity:.55}
+  .task.done .title{text-decoration:line-through;color:var(--muted)}
+  .check{flex:0 0 auto;width:24px;height:24px;border-radius:50%;border:2px solid var(--line);
+    background:var(--surface-2);margin-top:1px;display:grid;place-items:center;transition:.12s}
+  .check:hover{border-color:var(--teal)}
+  .check.on{background:var(--ok);border-color:var(--ok)}
+  .check svg{width:14px;height:14px;color:#fff;opacity:0;transition:.12s}
+  .check.on svg{opacity:1}
+  .task .body{flex:1;min-width:0}
+  .task .title{font-weight:560;line-height:1.35;word-wrap:break-word}
+  .task .notes{font-size:13px;color:var(--ink-soft);margin-top:3px;white-space:pre-wrap}
+  .badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .badge{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;
+    background:var(--surface-2);color:var(--ink-soft);border:1px solid var(--line);display:inline-flex;gap:5px;align-items:center}
+  .badge .dot{width:7px;height:7px;border-radius:50%}
+  .badge.cat{}
+  .badge.due{}
+  .badge.due.late{background:var(--overdue-soft);color:var(--overdue);border-color:transparent}
+  .badge.pri-alta{background:var(--alta-soft);color:var(--alta);border-color:transparent}
+  .rowact{display:flex;gap:4px;flex:0 0 auto}
+  .iconbtn{width:32px;height:32px;border-radius:8px;color:var(--muted);display:grid;place-items:center}
+  .iconbtn:hover{background:var(--surface-2);color:var(--ink)}
+  .iconbtn svg{width:17px;height:17px}
+
+  .empty{text-align:center;color:var(--muted);padding:34px 16px;border:1px dashed var(--line);
+    border-radius:var(--r);background:var(--surface-2)}
+  .empty b{display:block;color:var(--ink-soft);font-size:15px;margin-bottom:4px}
+
+  /* COMPOSER (bottom) */
+  .composer{position:fixed;left:0;right:0;bottom:0;z-index:30;
+    background:linear-gradient(to top,var(--bg) 70%,transparent);
+    padding:10px 16px calc(12px + env(safe-area-inset-bottom));}
+  .composer .inner{max-width:1080px;margin:0 auto;display:flex;gap:8px;align-items:flex-end}
+  .composer .field{flex:1;display:flex;align-items:center;background:var(--surface);
+    border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:4px 4px 4px 14px}
+  .composer input.add{flex:1;border:none;background:none;color:var(--ink);padding:10px 0}
+  .composer input.add:focus{outline:none}
+  .mic,.send{flex:0 0 auto;width:44px;height:44px;border-radius:11px;display:grid;place-items:center}
+  .mic{color:var(--teal)}
+  .mic svg{width:22px;height:22px}
+  .mic.listening{background:var(--overdue);color:#fff;animation:pulse 1.3s infinite}
+  .mic.off{color:var(--muted);opacity:.5}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(180,35,24,.45)}70%{box-shadow:0 0 0 12px rgba(180,35,24,0)}100%{box-shadow:0 0 0 0 rgba(180,35,24,0)}}
+  .send{background:var(--teal);color:#fff}
+  .send svg{width:20px;height:20px}
+  .send:disabled{opacity:.4;cursor:default}
+  .hint{max-width:1080px;margin:6px auto 0;font-size:12px;color:var(--muted);text-align:center;min-height:16px}
+  .hint.live{color:var(--teal);font-weight:600}
+  .hint.err{color:var(--overdue);font-weight:600}
+
+  /* DIALOG */
+  dialog{border:none;border-radius:18px;padding:0;max-width:440px;width:calc(100% - 32px);
+    background:var(--surface);color:var(--ink);box-shadow:0 20px 60px rgba(0,0,0,.35)}
+  dialog::backdrop{background:rgba(8,20,24,.5);backdrop-filter:blur(2px)}
+  .dlg{padding:20px}
+  .dlg h3{margin:0 0 14px;font-size:17px;font-weight:650}
+  .dlg label{display:block;font-size:12px;font-weight:650;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.05em;margin:12px 0 5px}
+  .dlg input,.dlg select,.dlg textarea{width:100%;padding:10px 12px;border-radius:10px;
+    border:1px solid var(--line);background:var(--surface-2);color:var(--ink)}
+  .dlg textarea{resize:vertical;min-height:56px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .dlg-actions{display:flex;gap:8px;margin-top:18px}
+  .btn{padding:11px 16px;border-radius:11px;font-weight:600;font-size:15px}
+  .btn.primary{background:var(--teal);color:#fff;flex:1}
+  .btn.ghost{background:var(--surface-2);color:var(--ink-soft);border:1px solid var(--line)}
+  .btn.danger{background:none;color:var(--overdue);margin-right:auto}
+  .btn.delc{background:var(--overdue);color:#fff;flex:1}
+  .pick{display:block;width:100%;text-align:left;padding:11px 12px;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--ink);border-radius:10px;margin-bottom:8px;font-size:15px}
+  .pick:hover{border-color:var(--teal)}
+  .pick b{color:var(--teal);margin-right:7px}
+  .cmdq{font-size:16px;margin:0 0 2px;font-weight:560}
+
+  /* TOAST */
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:96px;z-index:50;
+    background:var(--ink);color:var(--bg);padding:11px 16px;border-radius:12px;
+    display:flex;align-items:center;gap:14px;box-shadow:0 10px 30px rgba(0,0,0,.3);
+    font-size:14px;max-width:calc(100% - 32px);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+  .toast.show{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+  .toast button{color:var(--teal);font-weight:700;background:none}
+  @media (prefers-color-scheme:dark){.toast button{color:var(--teal-d)}}
+
+  .foot{text-align:center;color:var(--muted);font-size:12px;margin-top:30px;line-height:1.6}
+
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  @media (min-width:760px){
+    .composer .field{padding-left:18px}
+    .hero{margin-top:22px}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="mark" aria-hidden="true"></div>
+      <h1>Tasques</h1>
+      <div class="hactions">
+        <button class="hbtn" id="data" title="Còpia de seguretat" aria-label="Còpia de seguretat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v11"/><path d="M8 10l4 4 4-4"/><path d="M4 20h16"/></svg>
+        </button>
+        <button class="hbtn" id="bell" title="Recordatoris" aria-label="Recordatoris">
+          <svg id="bellIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="searchwrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="search" type="search" placeholder="Cerca per títol o notes…" aria-label="Cerca">
+    </div>
+    <nav class="tabs" id="tabs" role="tablist"></nav>
+  </header>
+
+  <main id="view" aria-live="polite"></main>
+
+  <div class="foot">Veu: «Trucar Fluidra demà urgent» crea · «Elimina la de Fluidra» esborra · «Feta la de Siam» completa.<br>Totes les dades es desen només en aquest dispositiu. Res no surt al núvol.</div>
+</div>
+
+<div class="composer">
+  <div class="inner">
+    <div class="field">
+      <input class="add" id="add" autocomplete="off"
+        placeholder="Nova tasca… (p. ex. «Trucar a Fluidra demà urgent»)" aria-label="Nova tasca">
+      <button class="mic" id="mic" title="Dictar tasca" aria-label="Dictar tasca per veu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/></svg>
+      </button>
+    </div>
+    <button class="send" id="send" title="Afegir" aria-label="Afegir tasca" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+  </div>
+  <div class="hint" id="hint"></div>
+</div>
+
+<div class="toast" id="toast"><span id="toastMsg"></span><button id="toastAct" hidden></button></div>
+
+<dialog id="dlg">
+  <form class="dlg" id="dlgForm" method="dialog">
+    <h3 id="dlgTitle">Editar tasca</h3>
+    <label for="f-title">Títol</label>
+    <input id="f-title" required>
+    <label for="f-notes">Notes</label>
+    <textarea id="f-notes"></textarea>
+    <div class="grid2">
+      <div>
+        <label for="f-pri">Prioritat</label>
+        <select id="f-pri">
+          <option value="alta">Alta</option>
+          <option value="normal">Normal</option>
+          <option value="baixa">Baixa</option>
+        </select>
+      </div>
+      <div>
+        <label for="f-cat">Categoria</label>
+        <select id="f-cat">
+          <option value="trucades">Trucades</option>
+          <option value="encarrecs">Encàrrecs</option>
+          <option value="projectes">Projectes</option>
+          <option value="revisions">Revisions</option>
+          <option value="altra">Altra</option>
+        </select>
+      </div>
+    </div>
+    <label for="f-due">Data límit</label>
+    <input id="f-due" type="date">
+    <div class="dlg-actions">
+      <button type="button" class="btn danger" id="f-del">Eliminar</button>
+      <button type="button" class="btn ghost" id="f-cancel">Cancel·la</button>
+      <button type="submit" class="btn primary">Desa</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="cmdDlg">
+  <div class="dlg">
+    <h3 id="cmdTitle"></h3>
+    <div id="cmdBody"></div>
+    <div class="dlg-actions" id="cmdActions"></div>
+  </div>
+</dialog>
+
+<dialog id="dataDlg">
+  <div class="dlg">
+    <h3>Còpia de seguretat</h3>
+    <div id="dataBody"></div>
+    <div class="dlg-actions"><button type="button" class="btn ghost" id="dataClose">Tanca</button></div>
+  </div>
+</dialog>
+<input type="file" id="dataFile" accept="application/json,.json" hidden>
+
+<dialog id="setDlg">
+  <div class="dlg">
+    <h3>Recordatoris</h3>
+    <p id="setStatus" style="font-size:14px;color:var(--ink-soft);margin:0 0 4px"></p>
+    <label for="setTime">Avís diari a les</label>
+    <input id="setTime" type="time" value="08:00">
+    <p style="font-size:13px;color:var(--muted);margin:10px 0 0">
+      Cada matí a aquesta hora reps un resum de les tasques d'avui i les endarrerides. L'avís es prepara al teu dispositiu; no s'envia res al núvol.
+    </p>
+    <div class="dlg-actions">
+      <button type="button" class="btn ghost" id="setTest">Prova ara</button>
+      <button type="button" class="btn ghost" id="setClose">Tanca</button>
+      <button type="button" class="btn primary" id="setEnable">Activa</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+"use strict";
+
+/* ---------- Persistència local-first (storage API o localStorage) ---------- */
+const hasStore = typeof window.storage === "object" && window.storage;
+const KEY = "tasks_gerard_v1";
+const DB = {
+  async load(){
+    try{
+      if(hasStore){ const r = await window.storage.get(KEY); return r ? JSON.parse(r.value) : []; }
+      return JSON.parse(localStorage.getItem(KEY) || "[]");
+    }catch(e){ return []; }
+  },
+  async save(arr){
+    const s = JSON.stringify(arr);
+    try{
+      if(hasStore){ await window.storage.set(KEY, s); }
+      else { localStorage.setItem(KEY, s); }
+    }catch(e){ /* quota o sandbox: la sessió continua en memòria */ }
+  }
+};
+
+/* ---------- Estat ---------- */
+let tasks = [];
+let view = "avui";
+let query = "";
+let editId = null;
+
+const CATS = {trucades:"Trucades",encarrecs:"Encàrrecs",projectes:"Projectes",revisions:"Revisions",altra:"Altra"};
+const PRI_LABEL = {alta:"Alta",normal:"Normal",baixa:"Baixa"};
+const PRI_RANK = {alta:0,normal:1,baixa:2};
+
+/* ---------- Dates locals (sense desfasaments UTC) ---------- */
+const pad = n => String(n).padStart(2,"0");
+const toKey = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const todayKey = () => toKey(new Date());
+function fmtDue(key){
+  if(!key) return null;
+  const [y,m,d] = key.split("-").map(Number);
+  const date = new Date(y,m-1,d);
+  const diff = Math.round((date - new Date(todayKey().split("-").map(Number)[0], todayKey().split("-").map(Number)[1]-1, todayKey().split("-").map(Number)[2]))/86400000);
+  if(diff===0) return "Avui";
+  if(diff===1) return "Demà";
+  if(diff===-1) return "Ahir";
+  return new Intl.DateTimeFormat("ca-ES",{day:"numeric",month:"short"}).format(date);
+}
+const isOverdue = t => t.status==="pending" && t.due && t.due < todayKey();
+const isToday   = t => t.status==="pending" && t.due === todayKey();
+
+/* ---------- Intèrpret de llenguatge natural (català, 100% local) ---------- */
+const WEEKDAYS = {diumenge:0,dilluns:1,dimarts:2,dimecres:3,dijous:4,divendres:5,dissabte:6};
+function nextWeekday(target){
+  const d = new Date(); const cur = d.getDay();
+  let add = (target - cur + 7) % 7; if(add===0) add = 7; // sempre el proper
+  d.setDate(d.getDate()+add); return toKey(d);
+}
+function addDays(n){ const d=new Date(); d.setDate(d.getDate()+n); return toKey(d); }
+
+function parseInput(raw){
+  let text = " " + raw.trim() + " ";
+  let low = text.toLowerCase();
+  let pri = "normal", cat = "altra", due = null;
+
+  // Prioritat
+  if(/\b(urgent|urgents|prioritari|prioritària|priorit|important|crític|crítica|com abans|de seguida)\b/.test(low)) pri="alta";
+  else if(/\b(sense pressa|quan pugui|baixa prioritat|opcional|algun dia|si tinc temps)\b/.test(low)) pri="baixa";
+
+  // Categoria
+  if(/\b(trucar|truca|trucada|telefon|telèfon|telefonar|contactar)\b/.test(low)) cat="trucades";
+  else if(/\b(comprar|recollir|encàrrec|encarrec|passar per|portar|enviar)\b/.test(low)) cat="encarrecs";
+  else if(/\b(revisar|revisió|revisio|comprovar|verificar|inspeccionar|controlar)\b/.test(low)) cat="revisions";
+  else if(/\b(projecte|obra|reforma|capex|hotel|espai plus|siam|leed)\b/.test(low)) cat="projectes";
+
+  // Data — ordre important (frases llargues primer)
+  const datePatterns = [
+    [/\bdema?\s*passat\b|\bdemà\s*passat\b/, () => addDays(2)],
+    [/\bdem(a|à)(?![a-zà-úïü])/i,             () => addDays(1)],
+    [/\bavui\b/,                              () => addDays(0)],
+    [/\bdaqu(í|i)\s+a?\s*(\d{1,2})\s+dies?\b|\ben\s+(\d{1,2})\s+dies?\b/, (m)=>addDays(parseInt(m[2]||m[3],10))],
+    [/\b(dilluns|dimarts|dimecres|dijous|divendres|dissabte|diumenge)\b/, (m)=>nextWeekday(WEEKDAYS[m[1]])],
+    [/\b(?:el\s+)?(?:dia\s+)?(\d{1,2})\s+de\s+(gener|febrer|març|marc|abril|maig|juny|juliol|agost|setembre|octubre|novembre|desembre)(?![a-zà-úïü])/, (m)=>{
+        const M={gener:0,febrer:1,"març":2,marc:2,abril:3,maig:4,juny:5,juliol:6,agost:7,setembre:8,octubre:9,novembre:10,desembre:11};
+        const dd=parseInt(m[1],10), mm=M[m[2]]; const d=new Date(); let y=d.getFullYear();
+        const cand=new Date(y,mm,dd); if(cand<new Date(todayKey())) y++; return toKey(new Date(y,mm,dd));
+    }],
+    [/\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?\b/, (m)=>{
+        const dd=parseInt(m[1],10), mm=parseInt(m[2],10)-1; let y=m[3]?parseInt(m[3],10):new Date().getFullYear();
+        if(y<100) y+=2000; return toKey(new Date(y,mm,dd));
+    }],
+  ];
+  for(const [re,fn] of datePatterns){
+    const m = low.match(re);
+    if(m){ try{ due = fn(m); }catch(e){} text = text.replace(new RegExp(m[0],"i")," "); low = text.toLowerCase(); break; }
+  }
+
+  // Neteja del títol: treu paraules de prioritat residuals
+  let title = text
+    .replace(/\b(urgent|urgents|prioritari|prioritària|important|crític|crítica|sense pressa|quan pugui|opcional)\b/gi," ")
+    .replace(/\bel dia\b|\bel\b(?=\s*$)/gi," ")
+    .replace(/\s+/g," ").trim();
+  if(!title) title = raw.trim();
+  title = title.charAt(0).toUpperCase()+title.slice(1);
+
+  return {title, pri, cat, due};
+}
+
+/* ---------- Operacions ---------- */
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+async function addFromText(raw){
+  if(!raw.trim()) return;
+  const p = parseInput(raw);
+  const t = {id:uid(),title:p.title,notes:"",status:"pending",priority:p.pri,category:p.cat,due:p.due,createdAt:Date.now()};
+  tasks.unshift(t);
+  await DB.save(tasks);
+  render();
+  const bits = [PRI_LABEL[p.pri], p.due?fmtDue(p.due):null].filter(Boolean).join(" · ");
+  toast(`Afegida: ${p.title}${bits?" — "+bits:""}`, "Desfés", async ()=>{
+    tasks = tasks.filter(x=>x.id!==t.id); await DB.save(tasks); render();
+  });
+}
+async function toggle(id){
+  const t = tasks.find(x=>x.id===id); if(!t) return;
+  t.status = t.status==="done" ? "pending":"done";
+  t.updatedAt = Date.now();
+  await DB.save(tasks); render();
+}
+async function remove(id){ tasks = tasks.filter(x=>x.id!==id); await DB.save(tasks); render(); }
+async function clearDone(){
+  const n = tasks.filter(t=>t.status==="done").length; if(!n) return;
+  if(!confirm(`Eliminar ${n} ${n===1?"tasca feta":"tasques fetes"}?`)) return;
+  tasks = tasks.filter(t=>t.status!=="done"); await DB.save(tasks); render();
+}
+
+/* ---------- Comandes de veu (crear / eliminar / fet) ---------- */
+function norm(s){ return (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+  .replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ").trim(); }
+const NUMWORDS={u:1,un:1,una:1,dos:2,dues:2,tres:3,quatre:4,cinc:5,sis:6,set:7,vuit:8,nou:9,deu:10,onze:11,dotze:12};
+function spokenNumber(s){ s=(s||"").trim(); if(/^\d+$/.test(s)) return parseInt(s,10); return NUMWORDS[s]||null; }
+const STOP=new Set(["la","el","les","els","l","de","del","tasca","tasques","una","un","que","diu","com","a","numero","número"]);
+
+function visiblePending(){ return sortTasks(filtered(tasks).filter(t=>t.status==="pending")); }
+
+function matchByWords(query){
+  const q = norm(query).split(" ").filter(w=>w && !STOP.has(w));
+  if(!q.length) return [];
+  const scored = visiblePending().map(t=>{
+    const tn = norm(t.title);
+    const hits = q.filter(w=>tn.includes(w)).length;
+    return {t, hits, all: hits===q.length};
+  }).filter(x=>x.hits>0);
+  const full = scored.filter(x=>x.all);
+  const pool = full.length ? full : scored;
+  pool.sort((a,b)=>b.hits-a.hits);
+  return pool.map(x=>x.t);
+}
+
+function parseVoiceCommand(text){
+  const n = norm(text);
+  const delRe  = /^(elimina|eliminar|esborra|esborrar|suprimeix|suprimir|borra|borrar)\b/;
+  const doneRe = /^(marca|completa|completar|fet|feta|acabada|acabat)\b/;
+  if(delRe.test(n)){
+    const rest = n.replace(delRe,"").replace(/^\s*(la|el|les|els|l|de|del|tasca|com|que)\s+/g,"").trim();
+    return {type:"delete", rest};
+  }
+  if(doneRe.test(n)){
+    const rest = n.replace(doneRe,"").replace(/^\s*(la|el|les|els|l|de|del|tasca|com|que)\s+/g,"").trim();
+    return {type:"done", rest};
+  }
+  return {type:"create"};
+}
+
+function dispatchVoice(text){
+  const cmd = parseVoiceCommand(text);
+  if(cmd.type==="create"){ addFromText(text); return; }
+
+  let target=null, candidates=[];
+  const num = spokenNumber(cmd.rest);
+  if(num!=null){
+    const pend = visiblePending();
+    if(num>=1 && num<=pend.length) target = pend[num-1];
+    else { toast(`No hi ha cap tasca número ${num}.`); return; }
+  } else if(cmd.rest){
+    candidates = matchByWords(cmd.rest);
+    if(candidates.length===1) target = candidates[0];
+    else if(candidates.length===0){ toast(`No he trobat cap tasca amb «${cmd.rest}».`); return; }
+  } else {
+    toast(cmd.type==="delete" ? "Quina vols eliminar? Digues unes paraules del títol."
+                              : "Quina tasca? Digues unes paraules del títol."); return;
+  }
+
+  if(cmd.type==="done"){
+    if(target) markDone(target); else showPicker(candidates,"done");
+  } else {
+    if(target) confirmDelete(target); else showPicker(candidates,"delete");
+  }
+}
+
+async function markDone(t){
+  if(t.status==="done") return;
+  t.status="done"; t.updatedAt=Date.now(); await DB.save(tasks); render();
+  toast(`Feta: ${t.title}`,"Desfés", async ()=>{ t.status="pending"; await DB.save(tasks); render(); });
+}
+async function deleteWithUndo(t){
+  const idx = tasks.findIndex(x=>x.id===t.id);
+  tasks = tasks.filter(x=>x.id!==t.id); await DB.save(tasks); render();
+  toast(`Eliminada: ${t.title}`,"Desfés", async ()=>{
+    tasks.splice(Math.min(idx<0?tasks.length:idx, tasks.length), 0, t); await DB.save(tasks); render();
+  });
+}
+
+const cmdDlg = document.getElementById("cmdDlg");
+let cmdAction = "delete";
+function openCmd(){ cmdDlg.showModal(); }
+function confirmDelete(t){
+  cmdDlg.querySelector("#cmdTitle").textContent = "Eliminar tasca";
+  cmdDlg.querySelector("#cmdBody").innerHTML = `<p class="cmdq">«${esc(t.title)}»</p>`;
+  cmdDlg.querySelector("#cmdActions").innerHTML =
+    `<button type="button" class="btn ghost" data-close>Cancel·la</button>
+     <button type="button" class="btn delc" data-del="${t.id}">Eliminar</button>`;
+  openCmd();
+}
+function showPicker(list, action){
+  cmdAction = action;
+  list = list.slice(0,6);
+  cmdDlg.querySelector("#cmdTitle").textContent = action==="delete" ? "Quina vols eliminar?" : "Quina tasca?";
+  cmdDlg.querySelector("#cmdBody").innerHTML = list.map((t,i)=>
+    `<button type="button" class="pick" data-pick="${t.id}"><b>${i+1}</b>${esc(t.title)}</button>`).join("");
+  cmdDlg.querySelector("#cmdActions").innerHTML = `<button type="button" class="btn ghost" data-close>Cancel·la</button>`;
+  openCmd();
+}
+cmdDlg.addEventListener("click", e=>{
+  const close = e.target.closest("[data-close]");
+  const del   = e.target.closest("[data-del]");
+  const pick  = e.target.closest("[data-pick]");
+  if(close){ cmdDlg.close(); return; }
+  if(del){ const t=tasks.find(x=>x.id===del.dataset.del); cmdDlg.close(); if(t) deleteWithUndo(t); return; }
+  if(pick){
+    const t=tasks.find(x=>x.id===pick.dataset.pick); cmdDlg.close();
+    if(!t) return;
+    if(cmdAction==="delete") deleteWithUndo(t); else markDone(t);
+  }
+});
+
+/* ---------- Render ---------- */
+const $ = s => document.querySelector(s);
+function counts(){
+  const f = filtered(tasks);
+  return {
+    avui: f.filter(isToday).length,
+    endarrerides: f.filter(isOverdue).length,
+    totes: f.filter(t=>t.status==="pending").length,
+    fetes: f.filter(t=>t.status==="done").length,
+  };
+}
+function filtered(arr){
+  if(!query) return arr;
+  const q = query.toLowerCase();
+  return arr.filter(t => (t.title||"").toLowerCase().includes(q) || (t.notes||"").toLowerCase().includes(q));
+}
+function sortTasks(arr){
+  return arr.slice().sort((a,b)=>{
+    if(PRI_RANK[a.priority]!==PRI_RANK[b.priority]) return PRI_RANK[a.priority]-PRI_RANK[b.priority];
+    if(a.due&&b.due) return a.due<b.due?-1:1;
+    if(a.due) return -1; if(b.due) return 1;
+    return b.createdAt-a.createdAt;
+  });
+}
+
+function renderTabs(){
+  const c = counts();
+  const defs = [
+    ["avui","Avui",c.avui,false],
+    ["endarrerides","Endarrerides",c.endarrerides,true],
+    ["totes","Totes",c.totes,false],
+    ["fetes","Fetes",c.fetes,false],
+  ];
+  $("#tabs").innerHTML = defs.map(([id,label,n,warn])=>
+    `<button class="tab${warn&&n>0?' warn':''}" role="tab" data-view="${id}" aria-selected="${view===id}">
+       ${label}${n>0?`<span class="cnt">${n}</span>`:""}
+     </button>`).join("");
+}
+
+function taskHTML(t){
+  const over = isOverdue(t);
+  const dueTxt = t.due ? fmtDue(t.due) : null;
+  return `<li class="task p-${t.priority} ${over?'overdue':''} ${t.status==='done'?'done':''}" data-id="${t.id}">
+    <button class="check ${t.status==='done'?'on':''}" data-act="toggle" aria-label="Marca com a feta">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l4 4L19 7"/></svg>
+    </button>
+    <div class="body">
+      <div class="title">${esc(t.title)}</div>
+      ${t.notes?`<div class="notes">${esc(t.notes)}</div>`:""}
+      <div class="badges">
+        ${t.priority==="alta"?`<span class="badge pri-alta">● Alta</span>`:
+          `<span class="badge"><span class="dot" style="background:var(--${t.priority==='normal'?'normal':'baixa'})"></span>${PRI_LABEL[t.priority]}</span>`}
+        <span class="badge cat">${CATS[t.category]||"Altra"}</span>
+        ${dueTxt?`<span class="badge due ${over?'late':''}">${over?'⚠ ':''}${dueTxt}</span>`:""}
+      </div>
+    </div>
+    <div class="rowact">
+      <button class="iconbtn" data-act="edit" aria-label="Editar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+      </button>
+    </div>
+  </li>`;
+}
+function listOr(arr, emptyTitle, emptyMsg){
+  if(!arr.length) return `<div class="empty"><b>${emptyTitle}</b>${emptyMsg||""}</div>`;
+  return `<ul class="list">${arr.map(taskHTML).join("")}</ul>`;
+}
+
+function render(){
+  renderTabs();
+  const f = filtered(tasks);
+  const el = $("#view");
+
+  if(view==="avui"){
+    const over = sortTasks(f.filter(isOverdue));
+    const today = sortTasks(f.filter(isToday));
+    const d = new Date();
+    const dayName = new Intl.DateTimeFormat("ca-ES",{weekday:"long"}).format(d);
+    const rest = new Intl.DateTimeFormat("ca-ES",{day:"numeric",month:"long"}).format(d);
+    const hi = today.filter(t=>t.priority==="alta").length;
+    el.innerHTML = `
+      <div class="hero">
+        <div class="date"><span class="day">${cap(dayName)}</span>, ${rest}</div>
+        <div class="meta">${today.length} ${today.length===1?'tasca':'tasques'} per avui${hi?` · ${hi} d'alta prioritat`:''}${over.length?` · ${over.length} endarrerida${over.length>1?'es':''}`:''}</div>
+      </div>
+      ${over.length?`<div class="alert"><span>⚠</span><span>Tens <b>${over.length}</b> ${over.length===1?'tasca endarrerida':'tasques endarrerides'}.</span></div>`:""}
+      ${over.length?`<div class="section"><h2>Endarrerides <span class="n">${over.length}</span></h2>${listOr(over,"")}</div>`:""}
+      <div class="section"><h2>Avui <span class="n">${today.length}</span></h2>
+        ${listOr(today, "Res per avui", "Dicta o escriu una tasca per començar.")}</div>`;
+  }
+  else if(view==="endarrerides"){
+    const over = sortTasks(f.filter(isOverdue));
+    el.innerHTML = `<div class="section" style="margin-top:16px"><h2>Endarrerides <span class="n">${over.length}</span></h2>
+      ${listOr(over,"Cap tasca endarrerida","Tot al dia.")}</div>`;
+  }
+  else if(view==="totes"){
+    const pend = sortTasks(f.filter(t=>t.status==="pending"));
+    el.innerHTML = `<div class="section" style="margin-top:16px"><h2>Pendents <span class="n">${pend.length}</span></h2>
+      ${listOr(pend,"Cap tasca pendent","Dicta o escriu la primera.")}</div>`;
+  }
+  else { // fetes
+    const done = f.filter(t=>t.status==="done").sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+    el.innerHTML = `<div class="section" style="margin-top:16px">
+      <h2>Fetes <span class="n">${done.length}</span>
+        ${done.length?`<button class="iconbtn" id="clearDone" title="Buidar historial" style="margin-left:auto;color:var(--overdue)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button>`:""}
+      </h2>${listOr(done,"Encara res","Les tasques completades apareixeran aquí.")}</div>`;
+    const cd = $("#clearDone"); if(cd) cd.onclick = clearDone;
+  }
+}
+
+const esc = s => (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const cap = s => s.charAt(0).toUpperCase()+s.slice(1);
+
+/* ---------- Delegació de clics a les targetes ---------- */
+$("#view").addEventListener("click", e=>{
+  const li = e.target.closest(".task"); if(!li) return;
+  const id = li.dataset.id;
+  const act = e.target.closest("[data-act]");
+  if(!act) return;
+  if(act.dataset.act==="toggle") toggle(id);
+  if(act.dataset.act==="edit") openEdit(id);
+});
+
+/* ---------- Tabs / cerca ---------- */
+$("#tabs").addEventListener("click", e=>{
+  const t = e.target.closest(".tab"); if(!t) return;
+  view = t.dataset.view; render();
+});
+$("#search").addEventListener("input", e=>{ query = e.target.value; render(); });
+
+/* ---------- Composer ---------- */
+const addInput = $("#add"), sendBtn = $("#send");
+addInput.addEventListener("input", ()=>{ sendBtn.disabled = !addInput.value.trim(); });
+addInput.addEventListener("keydown", e=>{ if(e.key==="Enter") submitAdd(); });
+sendBtn.addEventListener("click", submitAdd);
+function submitAdd(){
+  const v = addInput.value.trim(); if(!v) return;
+  addInput.value=""; sendBtn.disabled=true; hint("");
+  dispatchVoice(v);
+}
+
+/* ---------- Veu (Web Speech API) ---------- */
+const micBtn = $("#mic");
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const inIframe = (()=>{ try{ return window.self !== window.top; }catch(e){ return true; } })();
+const isiOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+              (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+let rec = null, listening = false, finalText = "", autoCreate = true;
+
+if(!SR){ micBtn.classList.add("off"); micBtn.title="Veu no disponible en aquest navegador"; }
+
+function openStandalone(){
+  // Quan el micròfon està bloquejat dins l'artefacte: obrir la pàgina sencera.
+  try{ window.open(window.location.href, "_blank", "noopener"); }
+  catch(e){ hint("Obre aquest fitxer en una pestanya pròpia per fer servir la veu.","err"); }
+}
+
+micBtn.addEventListener("click", ()=>{
+  if(!SR){
+    hint(isiOS ? "iOS: dicta amb la tecla del micròfon del teclat i prem +."
+               : "Veu no disponible aquí. Escriu la tasca i prem +.", "err");
+    return;
+  }
+  if(listening){ rec && rec.stop(); return; }
+  finalText = "";
+  rec = new SR(); rec.lang="ca-ES"; rec.interimResults=true; rec.maxAlternatives=1;
+  rec.continuous=false;
+  rec.onstart = ()=>{ listening=true; micBtn.classList.add("listening"); hint("Escoltant… parla ara","live"); };
+  rec.onresult = ev=>{
+    let txt=""; for(let i=0;i<ev.results.length;i++) txt+=ev.results[i][0].transcript;
+    addInput.value = txt; sendBtn.disabled = !txt.trim();
+    if(ev.results[ev.results.length-1].isFinal){ finalText = txt.trim(); }
+    hint(`«${txt}»`,"live");
+  };
+  rec.onerror = ev=>{
+    listening=false; micBtn.classList.remove("listening");
+    if(ev.error==="not-allowed" || ev.error==="service-not-allowed"){
+      if(inIframe){
+        hint("Micròfon bloquejat dins la finestra. Obre la pàgina sencera ▸","err");
+        toast("El micròfon està bloquejat aquí dins.","Obrir en pestanya", openStandalone);
+      } else {
+        hint("Permís de micròfon denegat. Activa'l a la barra del navegador.","err");
+      }
+      return;
+    }
+    const map={"no-speech":"No t'he sentit. Torna-ho a provar.","audio-capture":"No es detecta cap micròfon."};
+    hint(map[ev.error]||"Error de veu. Escriu la tasca.","err");
+  };
+  rec.onend = ()=>{
+    listening=false; micBtn.classList.remove("listening");
+    if(finalText){
+      addInput.value=""; sendBtn.disabled=true; hint("");
+      dispatchVoice(finalText);          // crear, eliminar o marcar fet segons el que diguis
+      finalText="";
+    }
+  };
+  try{ rec.start(); }
+  catch(e){
+    listening=false; micBtn.classList.remove("listening");
+    hint(inIframe ? "No s'ha pogut obrir el micròfon. Obre la pàgina sencera." : "No s'ha pogut iniciar el micròfon.","err");
+  }
+});
+function hint(msg,cls){ const h=$("#hint"); h.textContent=msg||""; h.className="hint"+(cls?" "+cls:""); }
+
+/* ---------- Diàleg d'edició ---------- */
+const dlg = $("#dlg");
+function openEdit(id){
+  const t = tasks.find(x=>x.id===id); if(!t) return;
+  editId = id;
+  $("#dlgTitle").textContent="Editar tasca";
+  $("#f-title").value=t.title; $("#f-notes").value=t.notes||"";
+  $("#f-pri").value=t.priority; $("#f-cat").value=t.category; $("#f-due").value=t.due||"";
+  dlg.showModal();
+}
+$("#dlgForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const t = tasks.find(x=>x.id===editId); if(!t) return;
+  t.title=$("#f-title").value.trim()||t.title; t.notes=$("#f-notes").value.trim();
+  t.priority=$("#f-pri").value; t.category=$("#f-cat").value; t.due=$("#f-due").value||null;
+  t.updatedAt=Date.now();
+  await DB.save(tasks); dlg.close(); render();
+});
+$("#f-cancel").addEventListener("click", ()=>dlg.close());
+$("#f-del").addEventListener("click", async ()=>{ await remove(editId); dlg.close(); });
+
+/* ---------- Toast ---------- */
+let toastTimer=null;
+function toast(msg, actLabel, actFn){
+  const el=$("#toast"), btn=$("#toastAct");
+  $("#toastMsg").textContent=msg;
+  if(actLabel){ btn.hidden=false; btn.textContent=actLabel; btn.onclick=()=>{ hideToast(); actFn&&actFn(); }; }
+  else btn.hidden=true;
+  el.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(hideToast,4200);
+}
+function hideToast(){ $("#toast").classList.remove("show"); }
+
+/* ---------- Còpia de seguretat (exporta / importa) ---------- */
+const dataDlg = $("#dataDlg");
+let pendingImport = null;
+
+function sanitizeTask(o){
+  if(!o || typeof o!=="object") return null;
+  const title = (o.title||"").toString().trim(); if(!title) return null;
+  const pri = ["alta","normal","baixa"].includes(o.priority) ? o.priority : "normal";
+  const cat = ["trucades","encarrecs","projectes","revisions","altra"].includes(o.category) ? o.category : "altra";
+  const status = o.status==="done" ? "done" : "pending";
+  let due = (typeof o.due==="string" && /^\d{4}-\d{2}-\d{2}$/.test(o.due)) ? o.due : null;
+  const t = {
+    id: (o.id && typeof o.id==="string") ? o.id : uid(),
+    title, notes:(o.notes||"").toString(),
+    status, priority:pri, category:cat, due,
+    createdAt: Number(o.createdAt) || Date.now()
+  };
+  if(o.updatedAt) t.updatedAt = Number(o.updatedAt);
+  return t;
+}
+
+function exportData(){
+  try{
+    const payload = {app:"tasques-gerard", version:1, exportedAt:new Date().toISOString(), count:tasks.length, tasks};
+    const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `tasques-backup-${todayKey()}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 2000);
+    setData("status", `Exportades ${tasks.length} ${tasks.length===1?"tasca":"tasques"}.`);
+  }catch(e){ setData("status","No s'ha pogut descarregar aquí. Prova-ho amb l'app instal·lada."); }
+}
+
+function setData(what, msg){
+  const s = $("#dataStatus"); if(s && what==="status") s.textContent = msg||"";
+}
+
+function resetDataBody(){
+  $("#dataBody").innerHTML = `
+    <p style="font-size:14px;color:var(--ink-soft);margin:0 0 12px">Desa una còpia de totes les tasques en un fitxer, o restaura-la en un altre dispositiu. Tot queda al teu equip.</p>
+    <button type="button" class="btn primary" id="doExport" style="width:100%;margin-bottom:8px">Exporta una còpia (.json)</button>
+    <button type="button" class="btn ghost" id="doImport" style="width:100%">Importa una còpia…</button>
+    <p id="dataStatus" style="font-size:13px;color:var(--muted);margin:12px 0 0;min-height:16px"></p>`;
+  $("#doExport").onclick = exportData;
+  $("#doImport").onclick = ()=> $("#dataFile").click();
+}
+function openData(){ pendingImport=null; resetDataBody(); dataDlg.showModal(); }
+
+function showImportChoice(n){
+  $("#dataBody").innerHTML = `
+    <p class="cmdq">${n} ${n===1?"tasca trobada":"tasques trobades"} al fitxer.</p>
+    <p style="font-size:13px;color:var(--muted);margin:0 0 14px">«Substitueix» esborra les actuals i deixa només les del fitxer. «Afegeix» manté les actuals i incorpora les que no hi siguin.</p>
+    <button type="button" class="btn primary" id="impReplace" style="width:100%;margin-bottom:8px">Substitueix-ho tot</button>
+    <button type="button" class="btn ghost" id="impMerge" style="width:100%">Afegeix-les a les actuals</button>`;
+  $("#impReplace").onclick = ()=>applyImport("replace");
+  $("#impMerge").onclick   = ()=>applyImport("merge");
+}
+
+async function applyImport(mode){
+  if(!pendingImport) return;
+  const n = pendingImport.length;
+  if(mode==="replace"){ tasks = pendingImport; }
+  else {
+    const have = new Set(tasks.map(t=>t.id));
+    tasks = pendingImport.filter(t=>!have.has(t.id)).concat(tasks);
+  }
+  await DB.save(tasks); render();
+  pendingImport = null; dataDlg.close();
+  toast(mode==="replace" ? `Restaurades ${tasks.length} tasques.` : `Importació feta (${n} al fitxer).`);
+}
+
+$("#data").addEventListener("click", openData);
+$("#dataClose").addEventListener("click", ()=>dataDlg.close());
+$("#dataFile").addEventListener("change", e=>{
+  const file = e.target.files[0]; e.target.value=""; if(!file) return;
+  const fr = new FileReader();
+  fr.onload = ()=>{
+    try{
+      const data = JSON.parse(fr.result);
+      const arr = Array.isArray(data) ? data : (Array.isArray(data.tasks) ? data.tasks : null);
+      if(!arr) throw 0;
+      const clean = arr.map(sanitizeTask).filter(Boolean);
+      if(!clean.length) throw 0;
+      pendingImport = clean;
+      showImportChoice(clean.length);
+    }catch(err){ setData("status","Fitxer no vàlid. Ha de ser un backup .json d'aquesta app."); }
+  };
+  fr.onerror = ()=> setData("status","No s'ha pogut llegir el fitxer.");
+  fr.readAsText(file);
+});
+
+/* ---------- Configuració i recordatoris ---------- */
+const SET_KEY = "settings_gerard_v1";
+let settings = { notify:false, dailyTime:"08:00", lastDaily:"" };
+let schedTimer = null;
+
+async function loadSettings(){
+  try{
+    let raw = null;
+    if(hasStore){ const r = await window.storage.get(SET_KEY); raw = r ? r.value : null; }
+    else raw = localStorage.getItem(SET_KEY);
+    if(raw) settings = Object.assign(settings, JSON.parse(raw));
+  }catch(e){}
+}
+async function saveSettings(){
+  const s = JSON.stringify(settings);
+  try{ if(hasStore) await window.storage.set(SET_KEY, s); else localStorage.setItem(SET_KEY, s); }catch(e){}
+}
+
+function dailySummary(){
+  const today = tasks.filter(isToday).length;
+  const over  = tasks.filter(isOverdue).length;
+  const hi    = tasks.filter(t=>isToday(t) && t.priority==="alta").length;
+  const parts = [`${today} ${today===1?"tasca":"tasques"} per avui`];
+  if(hi) parts.push(`${hi} d'alta prioritat`);
+  if(over) parts.push(`${over} endarrerida${over>1?"es":""}`);
+  return parts.join(" · ");
+}
+
+async function fireNotification(title, body){
+  if(!("Notification" in window) || Notification.permission!=="granted") return false;
+  try{
+    const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
+    if(reg && reg.showNotification){
+      await reg.showNotification(title,{body,icon:"icon-192.png",badge:"icon-192.png",tag:"tasques-daily"});
+    } else { new Notification(title,{body,icon:"icon-192.png"}); }
+    return true;
+  }catch(e){ return false; }
+}
+
+// Programació en segon pla (Chromium: dispara encara que estigui tancada). iOS no ho suporta.
+async function scheduleBackgroundDaily(){
+  try{
+    if(!("Notification" in window) || Notification.permission!=="granted") return;
+    if(!("showTrigger" in Notification.prototype)) return;
+    const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
+    if(!reg || !reg.showNotification) return;
+    try{ (await reg.getNotifications({includeTriggered:true,tag:"tasques-bg"})).forEach(n=>n.close()); }catch(e){}
+    const [hh,mm] = settings.dailyTime.split(":").map(Number);
+    const when = new Date(); when.setHours(hh,mm,0,0);
+    if(when <= new Date()) when.setDate(when.getDate()+1);
+    await reg.showNotification("Tasques d'avui",{
+      tag:"tasques-bg", body:"Obre per veure el dia", icon:"icon-192.png",
+      showTrigger: new TimestampTrigger(when.getTime())
+    });
+  }catch(e){}
+}
+
+function tick(){
+  if(!settings.notify || !("Notification" in window) || Notification.permission!=="granted") return;
+  const now = new Date(), tk = todayKey();
+  const [hh,mm] = settings.dailyTime.split(":").map(Number);
+  const cur = now.getHours()*60 + now.getMinutes();
+  if(settings.lastDaily !== tk && cur >= hh*60+mm){
+    settings.lastDaily = tk; saveSettings();
+    fireNotification("Tasques d'avui", dailySummary());
+  }
+}
+function startScheduler(){ clearInterval(schedTimer); schedTimer = setInterval(tick, 30000); tick(); }
+
+function reflectBell(){
+  const on = settings.notify && ("Notification" in window) && Notification.permission==="granted";
+  $("#bell").classList.toggle("on", on);
+}
+
+/* Diàleg de recordatoris */
+const setDlg = $("#setDlg");
+function openSettings(){
+  $("#setTime").value = settings.dailyTime;
+  const perm = ("Notification" in window) ? Notification.permission : "unsupported";
+  const msg = {
+    granted: settings.notify ? "Recordatoris activats." : "Permís concedit. Prem «Activa».",
+    denied:  "El navegador té bloquejades les notificacions. Activa-les a la configuració del lloc.",
+    default: "Prem «Activa» i accepta el permís de notificacions.",
+    unsupported: "Aquest navegador no suporta notificacions. A l'iPhone cal instal·lar l'app a la pantalla d'inici."
+  }[perm];
+  $("#setStatus").textContent = msg;
+  setDlg.showModal();
+}
+$("#bell").addEventListener("click", openSettings);
+$("#setClose").addEventListener("click", ()=>setDlg.close());
+$("#setTime").addEventListener("change", async ()=>{
+  settings.dailyTime = $("#setTime").value || "08:00"; settings.lastDaily="";
+  await saveSettings(); if(settings.notify){ startScheduler(); scheduleBackgroundDaily(); }
+});
+$("#setEnable").addEventListener("click", async ()=>{
+  if(!("Notification" in window)){ $("#setStatus").textContent="Notificacions no disponibles aquí."; return; }
+  let perm = Notification.permission;
+  if(perm==="default") perm = await Notification.requestPermission();
+  settings.notify = (perm==="granted");
+  settings.dailyTime = $("#setTime").value || "08:00";
+  await saveSettings();
+  if(settings.notify){ startScheduler(); scheduleBackgroundDaily(); $("#setStatus").textContent="Recordatoris activats."; }
+  else $("#setStatus").textContent = perm==="denied" ? "Permís denegat pel navegador." : "No s'ha pogut activar.";
+  reflectBell();
+});
+$("#setTest").addEventListener("click", async ()=>{
+  if(!("Notification" in window)){ $("#setStatus").textContent="Notificacions no disponibles aquí."; return; }
+  let perm = Notification.permission;
+  if(perm==="default") perm = await Notification.requestPermission();
+  if(perm!=="granted"){ $("#setStatus").textContent="Cal concedir el permís per provar."; reflectBell(); return; }
+  const ok = await fireNotification("Tasques d'avui", dailySummary());
+  $("#setStatus").textContent = ok ? "Avís enviat." : "No s'ha pogut mostrar l'avís.";
+  reflectBell();
+});
+
+/* Service worker (només quan està allotjat en https/localhost) */
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=>{ navigator.serviceWorker.register("sw.js").catch(()=>{}); });
+}
+
+/* ---------- Inici ---------- */
+(async function init(){
+  tasks = await DB.load();
+  await loadSettings();
+  render();
+  reflectBell();
+  if(settings.notify && ("Notification" in window) && Notification.permission==="granted"){
+    startScheduler(); scheduleBackgroundDaily();
+  }
+})();
+</script>
+</body>
+</html>
