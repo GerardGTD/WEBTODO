@@ -228,7 +228,7 @@
 
   <main id="view" aria-live="polite"></main>
 
-  <div class="foot">Veu: «Trucar Fluidra demà urgent» crea · «Elimina la de Fluidra» esborra · «Feta la de Siam» completa.<br>Totes les dades es desen només en aquest dispositiu. Res no surt al núvol.</div>
+  <div class="foot">Veu: «Reunió DG demà a les 9:30» · «Trucar Fluidra avui urgent» · «Elimina la de Siam».<br>Totes les dades es desen només en aquest dispositiu. Res no surt al núvol.</div>
 </div>
 
 <div class="composer">
@@ -276,8 +276,16 @@
         </select>
       </div>
     </div>
-    <label for="f-due">Data límit</label>
-    <input id="f-due" type="date">
+    <div class="grid2">
+      <div>
+        <label for="f-due">Data límit</label>
+        <input id="f-due" type="date">
+      </div>
+      <div>
+        <label for="f-time">Hora</label>
+        <input id="f-time" type="time">
+      </div>
+    </div>
     <div class="dlg-actions">
       <button type="button" class="btn danger" id="f-del">Eliminar</button>
       <button type="button" class="btn ghost" id="f-cancel">Cancel·la</button>
@@ -415,15 +423,55 @@ function parseInput(raw){
     if(m){ try{ due = fn(m); }catch(e){} text = text.replace(new RegExp(m[0],"i")," "); low = text.toLowerCase(); break; }
   }
 
-  // Neteja del títol: treu paraules de prioritat residuals
+  // Hora prevista
+  let time = null;
+  {
+    const HW={una:1,un:1,dues:2,dos:2,tres:3,quatre:4,cinc:5,sis:6,set:7,vuit:8,nou:9,deu:10,onze:11,dotze:12};
+    const QW={un:1,"1":1,dos:2,"2":2,tres:3,"3":3};
+    const hourTok = "(\\d{1,2}|una|un|dues|dos|tres|quatre|cinc|sis|set|vuit|nou|deu|onze|dotze)";
+    let h=null, mi=0, m;
+
+    // Quarts catalans: "2/4 de 5", "un quart de cinc", "tres quarts de 5"
+    const qm = low.match(new RegExp("\\b(un|dos|tres|[123])\\s*(?:/\\s*4|\\s+quarts?)\\s+de\\s+(?:les\\s+)?"+hourTok+"\\b"));
+    if(qm){
+      const q = QW[qm[1]];
+      const H = /^\d+$/.test(qm[2]) ? parseInt(qm[2],10) : HW[qm[2]];
+      if(H!=null){ h=(H-1+24)%24; mi=q*15; }
+    }
+    if(h===null){ m = low.match(/\ba\s+(?:les|la)\s+(\d{1,2})(?:[:.h](\d{2}))?/); if(m){ h=parseInt(m[1],10); if(m[2]) mi=parseInt(m[2],10); } }
+    if(h===null){ m = low.match(/\ba\s+(?:les|la)\s+(una|un|dues|dos|tres|quatre|cinc|sis|set|vuit|nou|deu|onze|dotze)\b/); if(m) h=HW[m[1]]; }
+    if(h===null){ m = low.match(/\b(\d{1,2}):(\d{2})\b/); if(m){ h=parseInt(m[1],10); mi=parseInt(m[2],10); } }
+
+    if(h!==null){
+      if(!qm){
+        if(/\bi\s+quart\b/.test(low)) mi=15;
+        else if(/\bi\s+mitja\b/.test(low)) mi=30;
+        else if(/\btres\s+quarts\b/.test(low)) mi=45;
+      }
+      if(/\bdel\s+mat[ií](?![a-zà-úïü])/.test(low)){ if(h===12) h=0; }
+      else if(/\bdel\s+migdia\b/.test(low)){ if(h<12) h+=12; }
+      else if(/\bde\s+la\s+tarda\b/.test(low)){ if(h<12) h+=12; }
+      else if(/\bdel\s+vespre\b/.test(low)){ if(h<12) h+=12; }
+      else if(/\bde\s+la\s+nit(?![a-zà-úïü])/.test(low)){ if(h===12) h=0; else if(h<12) h+=12; }
+      if(h>=0 && h<=23 && mi>=0 && mi<=59){ time=`${pad(h)}:${pad(mi)}`; if(!due) due = addDays(0); }
+    }
+  }
+
+  // Neteja del títol: treu hora, prioritat i residus
   let title = text
+    .replace(/\b(?:a\s+(?:les|la)\s+)?(un|dos|tres|[123])\s*(?:\/\s*4|\s+quarts?)\s+de\s+(?:les\s+)?(\d{1,2}|una|un|dues|dos|tres|quatre|cinc|sis|set|vuit|nou|deu|onze|dotze)\b/gi," ")
+    .replace(/\ba\s+(les|la)\s+\d{1,2}\s*h\b/gi," ")
+    .replace(/\ba\s+(les|la)\s+(\d{1,2}([:.]\d{2})?|una|un|dues|dos|tres|quatre|cinc|sis|set|vuit|nou|deu|onze|dotze)\b/gi," ")
+    .replace(/\b(i\s+quart|i\s+mitja|tres\s+quarts)\b/gi," ")
+    .replace(/\b(del\s+mat[ií]|del\s+migdia|de\s+la\s+tarda|del\s+vespre|de\s+la\s+nit)(?![a-zà-úïü])/gi," ")
+    .replace(/\b\d{1,2}:\d{2}\b/g," ")
     .replace(/\b(urgent|urgents|prioritari|prioritària|important|crític|crítica|sense pressa|quan pugui|opcional)\b/gi," ")
     .replace(/\bel dia\b|\bel\b(?=\s*$)/gi," ")
     .replace(/\s+/g," ").trim();
   if(!title) title = raw.trim();
   title = title.charAt(0).toUpperCase()+title.slice(1);
 
-  return {title, pri, cat, due};
+  return {title, pri, cat, due, time};
 }
 
 /* ---------- Operacions ---------- */
@@ -432,11 +480,11 @@ function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(
 async function addFromText(raw){
   if(!raw.trim()) return;
   const p = parseInput(raw);
-  const t = {id:uid(),title:p.title,notes:"",status:"pending",priority:p.pri,category:p.cat,due:p.due,createdAt:Date.now()};
+  const t = {id:uid(),title:p.title,notes:"",status:"pending",priority:p.pri,category:p.cat,due:p.due,dueTime:p.time||null,reminded:false,createdAt:Date.now()};
   tasks.unshift(t);
   await DB.save(tasks);
   render();
-  const bits = [PRI_LABEL[p.pri], p.due?fmtDue(p.due):null].filter(Boolean).join(" · ");
+  const bits = [PRI_LABEL[p.pri], p.due?(fmtDue(p.due)+(p.time?` · ${p.time}`:"")):null].filter(Boolean).join(" · ");
   toast(`Afegida: ${p.title}${bits?" — "+bits:""}`, "Desfés", async ()=>{
     tasks = tasks.filter(x=>x.id!==t.id); await DB.save(tasks); render();
   });
@@ -581,10 +629,12 @@ function filtered(arr){
   return arr.filter(t => (t.title||"").toLowerCase().includes(q) || (t.notes||"").toLowerCase().includes(q));
 }
 function sortTasks(arr){
+  const dt = t => t.due ? (t.due + "T" + (t.dueTime || "99:99")) : null;
   return arr.slice().sort((a,b)=>{
     if(PRI_RANK[a.priority]!==PRI_RANK[b.priority]) return PRI_RANK[a.priority]-PRI_RANK[b.priority];
-    if(a.due&&b.due) return a.due<b.due?-1:1;
-    if(a.due) return -1; if(b.due) return 1;
+    const ak=dt(a), bk=dt(b);
+    if(ak&&bk) return ak<bk?-1:1;
+    if(ak) return -1; if(bk) return 1;
     return b.createdAt-a.createdAt;
   });
 }
@@ -605,7 +655,7 @@ function renderTabs(){
 
 function taskHTML(t){
   const over = isOverdue(t);
-  const dueTxt = t.due ? fmtDue(t.due) : null;
+  const dueTxt = t.due ? (fmtDue(t.due) + (t.dueTime ? ` · ${t.dueTime}` : "")) : null;
   return `<li class="task p-${t.priority} ${over?'overdue':''} ${t.status==='done'?'done':''}" data-id="${t.id}">
     <button class="check ${t.status==='done'?'on':''}" data-act="toggle" aria-label="Marca com a feta">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l4 4L19 7"/></svg>
@@ -672,6 +722,7 @@ function render(){
       </h2>${listOr(done,"Encara res","Les tasques completades apareixeran aquí.")}</div>`;
     const cd = $("#clearDone"); if(cd) cd.onclick = clearDone;
   }
+  if(typeof scheduleTaskTriggersDebounced==="function") scheduleTaskTriggersDebounced();
 }
 
 const esc = s => (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -775,16 +826,21 @@ function openEdit(id){
   editId = id;
   $("#dlgTitle").textContent="Editar tasca";
   $("#f-title").value=t.title; $("#f-notes").value=t.notes||"";
-  $("#f-pri").value=t.priority; $("#f-cat").value=t.category; $("#f-due").value=t.due||"";
+  $("#f-pri").value=t.priority; $("#f-cat").value=t.category; $("#f-due").value=t.due||""; $("#f-time").value=t.dueTime||"";
   dlg.showModal();
 }
 $("#dlgForm").addEventListener("submit", async e=>{
   e.preventDefault();
   const t = tasks.find(x=>x.id===editId); if(!t) return;
+  const prevDue=t.due, prevTime=t.dueTime||null;
   t.title=$("#f-title").value.trim()||t.title; t.notes=$("#f-notes").value.trim();
-  t.priority=$("#f-pri").value; t.category=$("#f-cat").value; t.due=$("#f-due").value||null;
+  t.priority=$("#f-pri").value; t.category=$("#f-cat").value;
+  t.due=$("#f-due").value||null;
+  t.dueTime=$("#f-time").value||null;
+  if(t.dueTime && !t.due) t.due=todayKey();      // hora sense data -> avui
+  if(t.due!==prevDue || t.dueTime!==prevTime) t.reminded=false;  // permet tornar a avisar
   t.updatedAt=Date.now();
-  await DB.save(tasks); dlg.close(); render();
+  await DB.save(tasks); dlg.close(); render(); scheduleTaskTriggers();
 });
 $("#f-cancel").addEventListener("click", ()=>dlg.close());
 $("#f-del").addEventListener("click", async ()=>{ await remove(editId); dlg.close(); });
@@ -811,10 +867,12 @@ function sanitizeTask(o){
   const cat = ["trucades","encarrecs","projectes","revisions","altra"].includes(o.category) ? o.category : "altra";
   const status = o.status==="done" ? "done" : "pending";
   let due = (typeof o.due==="string" && /^\d{4}-\d{2}-\d{2}$/.test(o.due)) ? o.due : null;
+  let dueTime = (typeof o.dueTime==="string" && /^\d{2}:\d{2}$/.test(o.dueTime)) ? o.dueTime : null;
+  if(dueTime && !due) due = todayKey();
   const t = {
     id: (o.id && typeof o.id==="string") ? o.id : uid(),
     title, notes:(o.notes||"").toString(),
-    status, priority:pri, category:cat, due,
+    status, priority:pri, category:cat, due, dueTime, reminded:!!o.reminded,
     createdAt: Number(o.createdAt) || Date.now()
   };
   if(o.updatedAt) t.updatedAt = Number(o.updatedAt);
@@ -920,15 +978,37 @@ function dailySummary(){
   return parts.join(" · ");
 }
 
-async function fireNotification(title, body){
+async function fireNotification(title, body, tag){
   if(!("Notification" in window) || Notification.permission!=="granted") return false;
   try{
     const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
     if(reg && reg.showNotification){
-      await reg.showNotification(title,{body,icon:"icon-192.png",badge:"icon-192.png",tag:"tasques-daily"});
+      await reg.showNotification(title,{body,icon:"icon-192.png",badge:"icon-192.png",tag:tag||"tasques-daily"});
     } else { new Notification(title,{body,icon:"icon-192.png"}); }
     return true;
   }catch(e){ return false; }
+}
+
+const CAT_LABEL = {trucades:"Trucada",encarrecs:"Encàrrec",projectes:"Projecte",revisions:"Revisió",altra:""};
+function taskNotifBody(t){
+  const bits = [PRI_LABEL[t.priority]==="Alta"?"Prioritat alta":null, CAT_LABEL[t.category]||null].filter(Boolean);
+  return bits.join(" · ");
+}
+
+// Recordatori per tasca quan l'app és oberta (qualsevol plataforma).
+function checkTaskReminders(){
+  if(!settings.notify || !("Notification" in window) || Notification.permission!=="granted") return;
+  const tk = todayKey(), now = new Date(), cur = now.getHours()*60 + now.getMinutes();
+  let changed = false;
+  for(const t of tasks){
+    if(t.status!=="pending" || t.due!==tk || !t.dueTime || t.reminded) continue;
+    const [hh,mm] = t.dueTime.split(":").map(Number);
+    if(cur >= hh*60+mm){
+      fireNotification(`${t.dueTime} · ${t.title}`, taskNotifBody(t), "task-"+t.id);
+      t.reminded = true; changed = true;
+    }
+  }
+  if(changed) DB.save(tasks);
 }
 
 // Programació en segon pla (Chromium: dispara encara que estigui tancada). iOS no ho suporta.
@@ -949,6 +1029,31 @@ async function scheduleBackgroundDaily(){
   }catch(e){}
 }
 
+// Programa un avís per a cada tasca amb data+hora futura (Chromium; a iOS només amb l'app oberta).
+let trigTimer = null;
+function scheduleTaskTriggersDebounced(){ clearTimeout(trigTimer); trigTimer = setTimeout(scheduleTaskTriggers, 1200); }
+async function scheduleTaskTriggers(){
+  try{
+    if(!settings.notify || !("Notification" in window) || Notification.permission!=="granted") return;
+    if(!("showTrigger" in Notification.prototype)) return;
+    const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
+    if(!reg || !reg.showNotification) return;
+    try{ (await reg.getNotifications({includeTriggered:true})).forEach(n=>{ if(n.tag && n.tag.indexOf("task-")===0) n.close(); }); }catch(e){}
+    const now = Date.now();
+    for(const t of tasks){
+      if(t.status!=="pending" || !t.due || !t.dueTime) continue;
+      const [y,mo,d] = t.due.split("-").map(Number);
+      const [hh,mm] = t.dueTime.split(":").map(Number);
+      const when = new Date(y,mo-1,d,hh,mm,0,0).getTime();
+      if(when <= now) continue;
+      await reg.showNotification(`${t.dueTime} · ${t.title}`,{
+        tag:"task-"+t.id, body:taskNotifBody(t), icon:"icon-192.png",
+        showTrigger: new TimestampTrigger(when)
+      });
+    }
+  }catch(e){}
+}
+
 function tick(){
   if(!settings.notify || !("Notification" in window) || Notification.permission!=="granted") return;
   const now = new Date(), tk = todayKey();
@@ -958,6 +1063,7 @@ function tick(){
     settings.lastDaily = tk; saveSettings();
     fireNotification("Tasques d'avui", dailySummary());
   }
+  checkTaskReminders();
 }
 function startScheduler(){ clearInterval(schedTimer); schedTimer = setInterval(tick, 30000); tick(); }
 
@@ -993,7 +1099,7 @@ $("#setEnable").addEventListener("click", async ()=>{
   settings.notify = (perm==="granted");
   settings.dailyTime = $("#setTime").value || "08:00";
   await saveSettings();
-  if(settings.notify){ startScheduler(); scheduleBackgroundDaily(); $("#setStatus").textContent="Recordatoris activats."; }
+  if(settings.notify){ startScheduler(); scheduleBackgroundDaily(); scheduleTaskTriggers(); $("#setStatus").textContent="Recordatoris activats."; }
   else $("#setStatus").textContent = perm==="denied" ? "Permís denegat pel navegador." : "No s'ha pogut activar.";
   reflectBell();
 });
@@ -1019,7 +1125,7 @@ if("serviceWorker" in navigator){
   render();
   reflectBell();
   if(settings.notify && ("Notification" in window) && Notification.permission==="granted"){
-    startScheduler(); scheduleBackgroundDaily();
+    startScheduler(); scheduleBackgroundDaily(); scheduleTaskTriggers();
   }
 })();
 </script>

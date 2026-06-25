@@ -27,6 +27,8 @@ Perquè sigui instal·lable i funcioni offline, els fitxers han d'estar servits 
 
 A la campana (capçalera) actives un **avís diari** a l'hora que triïs, amb el resum de tasques d'avui i endarrerides. «Prova ara» el dispara a l'instant.
 
+Cada tasca pot tenir **data i hora**. Si poses hora, reps un avís a aquella hora (recordatori per tasca). Pots dictar-ho de forma natural: «Reunió DG demà a les 9:30», «Trucar Fluidra avui a les 16h», «Visita obra a 2/4 de 5 de la tarda». També s'edita al llapis de cada tasca.
+
 Què és realista, sense amagar-ho:
 - **Windows (Chrome/Edge):** l'avís diari salta encara que tinguis l'app tancada (mentre l'ordinador i el navegador estiguin engegats).
 - **iPhone:** les notificacions web només funcionen amb l'app **instal·lada** a la pantalla d'inici. L'avís programat en segon pla **no** és fiable a iOS sense un servidor de push; el que sí funciona sempre és el resum en obrir l'app i els avisos mentre la tens oberta. La pantalla «Avui» ja és el teu resum diari en obrir-la.
